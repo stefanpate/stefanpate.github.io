@@ -20,12 +20,12 @@ description: >- # this means to ignore newlines until "baseurl:"
 baseurl: /stefanpate.github.io/ # the subpath of your site, e.g. /blog
 url: https://stefanpate.github.io # the base hostname & protocol for your site, e.g. http://example.com
 domain: stefanpate.github.io
-twitter_username: jekyllrb
-github_username:  jekyll
+github_username: stefanpate
+twitter_username: stefancarlpate
 
 # Build settings
 markdown: kramdown
-theme: jekyll-theme-minima
+theme: minima
 plugins:
   - jekyll-feed
 
