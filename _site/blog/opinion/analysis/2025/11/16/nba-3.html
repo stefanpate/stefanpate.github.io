@@ -61,7 +61,8 @@
 
 <p>The meteoric rise of three-point shooting volume in the past several years has been yet another source of consternation among fans, media, and former players. A striking heatmap of shots posted by Kirk Goldsberry displays this clearly<sup id="fnref:3" role="doc-noteref"><a href="#fn:3" class="footnote" rel="footnote">3</a></sup>. But the spirit of the critique is best embodied by a minute-long clip of the Boston Celtics and Toronto Raptors assiduously building a house of the Big Bad Wolf’s nightmares.</p>
 
-<p>[ https://x.com/BrickCenter_/status/1874191493998706910 ]</p>
+<blockquote class="twitter-tweet" data-lang="en"><p lang="en" dir="ltr">BrickCenter (@BrickCenter_) <a href="https://x.com/i/status/1874191493998706910">https://x.com/i/status/1874191493998706910</a></p>&mdash; BrickCenter (@BrickCenter_) <a href="https://x.com/i/status/1874191493998706910"></a></blockquote>
+<script async="" src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
 
 <p>Although the video misrepresents the vast skill of NBA players, it portrays well the monotony that results from an overemphasis of the three-point shot. Sports entertain most when gameplay is neither predictable nor predictably unpredictable. A faceoff between great opponents happens on a knife’s edge. No strike is landed without a counter, and constant counters plunge the competition deeper into the well of creativity. In my own circles, images of Jordan slicing and dicing<sup id="fnref:4" role="doc-noteref"><a href="#fn:4" class="footnote" rel="footnote">4</a></sup> through the midrange are often conjured in juxtaposition to the contemporary long-range catch-and-shoot aesthetic. But winning, not aesthetics is the primary objective of sports, making the unintended elegance more precious. We should not bemoan winning strategies that are metronomic. A repeat championship in Boston seemed inevitable before a tragic end of season, brick houses notwithstanding. And we should take care not to suffocate the game with incremental rule changes lest we drift towards Blernsball<sup id="fnref:5" role="doc-noteref"><a href="#fn:5" class="footnote" rel="footnote">5</a></sup>. Intervention should proceed deliberately, experimentally, and only if the natural evolution and diversity of gameplay seem stagnant under the existing rules. After all, the three-point line now on trial was originally introduced to “add excitement to the game”<sup id="fnref:6" role="doc-noteref"><a href="#fn:6" class="footnote" rel="footnote">6</a></sup>, was subsequently ignored for the better part of a decade<sup id="fnref:7" role="doc-noteref"><a href="#fn:7" class="footnote" rel="footnote">7</a></sup>, and in no way stymied the mid-range greatness of 90s and 00s players like Jordan and Kobe.
 The reality is that a big change has occurred in the past decade and a half. It jumps out from the data. The change happened swiftly, suggesting it was memetic, and is consistent with a simple explanation that players and teams want to win. The distribution of shots now appears to be past this transition. It’s been steady for about the median length of an NBA career. Now is the time to start discussing the issue and planning possible solutions. I’ll provide an opinion on a couple solutions which have been passed around.</p>
@@ -70,11 +71,17 @@ The reality is that a big change has occurred in the past decade and a half. It 
 
 <p>If our hearts don’t deceive us as fans, we should see evidence of change in the shot distribution data<sup id="fnref:8" role="doc-noteref"><a href="#fn:8" class="footnote" rel="footnote">8</a></sup>. It should appear as a bimodal distribution of shots – hot spots near the basket and behind the three-point line, and relatively fewer shots in the mid-range between. Such a pattern is clear in a two-dimensional histogram of shots taken over the 2024 season. Hotter colors indicate higher density.</p>
 
+<p><img src="/docs/assets/imgs/nba3/shot_distribution_2024.svg" alt="2024 2D Shot Distribution" /></p>
+
 <p>But look at the picture when we sum together all shots taken at a given distance from the basket. We see a third mode appear.</p>
+
+<p><img src="/docs/assets/imgs/nba3/shot_distribution_vs_distance_2024.svg" alt="2024 Shot Distribution vs Distance" /></p>
 
 <p>This middle mode, sitting just beyond 20 feet from the basket, corresponds to the corner three. This quirky solution to a lack of width in the NBA court provides a relatively easy opportunity to score three points. Eliminating this shot is the primary solution prescribed by Kirk Goldsberry in his The Ringer piece<sup id="fnref:3:1" role="doc-noteref"><a href="#fn:3" class="footnote" rel="footnote">3</a></sup>. The corner three draws extra criticism for being too easy a way to score three points. However, eliminating the corner three does not completely address the issue. Notice the towering mode straddling the 30 foot mark[#]. Our goal to encourage a variety of scoring strategies distributed all over the court corresponds in the histogram to deflating those giant peaks, taking their mass and spreading them out in a more uniform manner.</p>
 
 <p>The shot distribution in 2004 was more consistent with this picture.</p>
+
+<p><img src="/docs/assets/imgs/nba3/shot_distribution_vs_distance_2004.svg" alt="2004 Shot Distribution vs Distance" /></p>
 
 <p>I don’t claim that 2004 was an apogee of competition or entertainment, only that the shot distribution was more uniformly spread across the floor. In fact, it was competition that drove the evolution toward a tri-modal shot distribution over the ensuing two decades.</p>
 
@@ -82,14 +89,23 @@ The reality is that a big change has occurred in the past decade and a half. It 
 
 <p>This point may seem too obvious to make. Of course, all things equal, it’s better to score three points than two. But whether it pays to shoot the volume of three-point shots, distributed over the floor in the particular way we’ve seen, depends also on shooting percentage. The right metric to look at is expected value, the number of points expected per shot on average. When overlaid on the half-court, the picture bears a striking resemblance to shot distribution. Both exhibit hot spots near the basket and beyond the arc, with milder red colors in between.</p>
 
+<p><img src="/docs/assets/imgs/nba3/shot_expected_value_2024.svg" alt="2024 2D Shot Expected Value" /></p>
+
 <p>But can we say definitively from this that the 2024 shot distribution is a winning strategy? We’ve only squinted at the two pictures and anyway they are plotted in different units. Shot distribution is counted in fractions of the total shots taken. Expected value is measured in points.</p>
 
 <p>To test my claim that shooting has moved toward a winning strategy, I’ve assumed that the fractions of shots taken over the course of a season are like probabilities and asked which of three hypothetical probability distributions best recapitulates the one we observed. The simplest hypothesis, “Shoot from everywhere”, says that a lot of things are going on in a basketball game: the offense dribbles and moves the ball to get a good shot, the defense works to deny them, coaches draw up schemes. In the end, it all cancels out, and shots go up from all over the court. The second hypothesis, “Shoot your best shot”, also assumes this chaos, but adds in that offensive players tend to take shots they are likely to make. The final hypothesis, “Shoot your highest value shot”, asserts that players don’t just shoot to make. They shoot to earn as many points as possible. Have a look at the shot distributions these three hypotheses predict<sup id="fnref:9" role="doc-noteref"><a href="#fn:9" class="footnote" rel="footnote">9</a></sup>.</p>
 
-<p>“Shoot from everywhere” admittedly is a straw man but serves as a helpful point of reference. Both “Shoot your best shot” and “Shoot your highest value shot” get the hotspot around the basket right, but the latter better captures the three-point hotspot. Now that both hypothesis and ground truth are expressed in the same units of probability, there is a way to measure how far off they are<sup id="fnref:10" role="doc-noteref"><a href="#fn:10" class="footnote" rel="footnote">10</a></sup>. By this measure, “Shoot your highest value shot” is most consistent with the true 2024 shot distribution.
-But this was not always the case. In 2004, the straw man “Shoot from everywhere” was a slightly better approximation of the true shot distribution than “Shoot your highest value shot”.</p>
+<p><img src="/docs/assets/imgs/nba3/hypothetical_distributions_2024.svg" alt="2024 Hypothetical Distributions" /></p>
+
+<p>“Shoot from everywhere” admittedly is a straw man but serves as a helpful point of reference. Both “Shoot your best shot” and “Shoot your highest value shot” get the hotspot around the basket right, but the latter better captures the three-point hotspot. Now that both hypothesis and ground truth are expressed in the same units of probability, there is a way to measure how far off they are<sup id="fnref:10" role="doc-noteref"><a href="#fn:10" class="footnote" rel="footnote">10</a></sup>. By this measure, “Shoot your highest value shot” is most consistent with the true 2024 shot distribution.</p>
+
+<p>But this was not always the case. In 2004, the straw man “Shoot from everywhere” was a slightly better approximation of the true shot distribution than “Shoot your highest value shot”.</p>
+
+<p><img src="/docs/assets/imgs/nba3/hypothetical_distributions_2004.svg" alt="2004 Hypothetical Distributions" /></p>
 
 <p>The 2010s saw the value-optimizing strategy come to the fore, distancing itself from the other two hypotheses.</p>
+
+<p><img src="/docs/assets/imgs/nba3/dkl_historical_trends.svg" alt="Historical KL Divergence" /></p>
 
 <p>This is conspicuous timing. At this time, NBA teams began embracing analytics<sup id="fnref:11" role="doc-noteref"><a href="#fn:11" class="footnote" rel="footnote">11</a></sup>. Analytics may have been the catalyst, but the potential for change was already present.</p>
 
@@ -97,9 +113,13 @@ But this was not always the case. In 2004, the straw man “Shoot from everywher
 
 <p>The driving force behind the tri-modal shot distribution is the current point system, which pays a premium for three-point shots in excess of their relative level of difficulty. To simplify the picture, I’ve collapsed expected value within a given distance to the basket. In addition, I’ve plotted what expected value would be in an alternate universe where the three-point line had not been introduced.</p>
 
+<p><img src="/docs/assets/imgs/nba3/expected_value_v_distance_2024.svg" alt="2024 Shot Expected Value vs Distance" /></p>
+
 <p>The three-point premium is represented by spaces between orange and blue points. Pick any blue point from the mid-range and eyeball how much higher it is than another blue point from beyond the arc. That difference is likely smaller than the difference between the second blue point and the orange point above it, i.e., the premium given for shooting from beyond 20 feet. The first time I plotted this, I was struck by how the current point system bends the shape of the expected value curve from a decreasing function of distance to a “U”-shaped curve due to the high-expected value plateau around 30 feet. I’ll examine this more closely in a moment.</p>
 
 <p>This excessive premium was available as far back as 2004.</p>
+
+<p><img src="/docs/assets/imgs/nba3/expected_value_v_distance_2004.svg" alt="2004 Shot Expected Value vs Distance" /></p>
 
 <p>In other words, players have long been skilled enough to gain extra points by shooting more threes. What happened in 2010 was a realization, not an evolution of talent.</p>
 
@@ -107,11 +127,15 @@ But this was not always the case. In 2004, the straw man “Shoot from everywher
 
 <p>There is ample room for opinion on this question. To me the core tension is between leaving the game to evolve on its own and intervening. On the one hand, shot distribution may become so predictable as to make it an easy target for defensive counter tactics which will break the trend. On the other, there is no guarantee the game always evolves to a better place or continues to evolve at all. Maybe a small crack in the game’s design will grow larger.</p>
 
-<p>If the game is to evolve, it is reasonable to expect this will play out on a generational timescale. The median NBA career lasts about 5 years[#]. Let’s take an NBA-generation as the duration we should hold our breath, less some lead time for discussion and planning of solutions. That would make now a good time to start the process. One can see a leveling out of the shot distribution beginning in 2020.</p>
+<p>If the game is to evolve, it is reasonable to expect this will play out on a generational timescale. The median NBA career lasts about 5 years<sup id="fnref:13" role="doc-noteref"><a href="#fn:13" class="footnote" rel="footnote">12</a></sup>. Let’s take an NBA-generation as the duration we should hold our breath, less some lead time for discussion and planning of solutions. That would make now a good time to start the process. One can see a leveling out of the shot distribution beginning in 2020.</p>
+
+<p><img src="/docs/assets/imgs/nba3/shot_fraction_historical_trends.svg" alt="Historical Shot Breakdown" /></p>
+
+<p><img src="/docs/assets/imgs/nba3/two_vs_three_point_shot_fraction_historical_trends.svg" alt="2 vs 3 Historical" /></p>
 
 <h3 id="what-should-we-do"><strong>What should we do?</strong></h3>
 
-<p>Above I argued that competition and the desire to win drove us to an overly concentrated shot distribution. However, the ultimate cause of the collapse to predictability was the bluntness of the three-point line itself. The stripe rudely inserts a discontinuity in an otherwise continuous curve of shot difficulty. We don’t have to live with the mistakes of our past. The MLB’s recent rule changes provide a model of success<sup id="fnref:12" role="doc-noteref"><a href="#fn:12" class="footnote" rel="footnote">12</a></sup>. But we should keep in mind the flaws of a previous rule change as we consider a new one. Moreover, we should be deliberate and experimental like the MLB, using the G league as a laboratory.
+<p>Above I argued that competition and the desire to win drove us to an overly concentrated shot distribution. However, the ultimate cause of the collapse to predictability was the bluntness of the three-point line itself. The stripe rudely inserts a discontinuity in an otherwise continuous curve of shot difficulty. We don’t have to live with the mistakes of our past. The MLB’s recent rule changes provide a model of success<sup id="fnref:12" role="doc-noteref"><a href="#fn:12" class="footnote" rel="footnote">13</a></sup>. But we should keep in mind the flaws of a previous rule change as we consider a new one. Moreover, we should be deliberate and experimental like the MLB, using the G league as a laboratory.
 I’ve heard of two proposed solutions.</p>
 
 <ol>
@@ -121,6 +145,8 @@ I’ve heard of two proposed solutions.</p>
 
 <p>The first solution has been nicely developed by Kirk Goldsberry. Also seen in a WhatsApp chat with my brother. (Note how deftly he sidesteps my ramblings.)</p>
 
+<p><img src="/docs/assets/imgs/nba3/WhatsApp_nba3.png" alt="WhatsApp Chat" /></p>
+
 <p>Bill Simmons has discussed the second solution on his podcast. Please indulge me two more extreme solutions with low to vanishing chance of becoming implemented but which provide some contrast.</p>
 
 <ol type="a">
@@ -129,6 +155,8 @@ I’ve heard of two proposed solutions.</p>
 </ol>
 
 <p>To anchor discussion, here again are the 2024 shot expected value and shot distribution versus distance to the basket.</p>
+
+<p><img src="/docs/assets/imgs/nba3/combo_plot_2024.svg" alt="2024 Combo Plot" /></p>
 
 <p>Our goal is to make rule changes that re-distribute the mass in those giant modes around the court to produce a more diverse, uniform shot distribution. That would correspond to rich, compelling gameplay. All but one of these solutions would achieve this goal via change to the expected value curve.</p>
 
@@ -144,8 +172,6 @@ Now for the real solutions.</p>
 <h3 id="conclusion"><strong>Conclusion</strong></h3>
 
 <p>This story contains a lesson about when design and evolution meet. In the excitement of watching a game emerge within the constraints of the rules and features of one’s own design, it borders on impossible not to swell with optimism about all the ways competition will evolve the game to new heights. But as in optimization, specifying the ends does not guarantee that the resulting means will be beautiful. Cracks and hacks are inevitably found, exploited, and used to corrupt the designer’s ethereal intentions. The best games, or markets, processes, systems of any kind, are self-correcting. But how to build that in remains a mystery.</p>
-
-<p><img src="https://github.com/stefanpate/coarse-grain-rxns/blob/master/artifacts/figures/2_steps_250728_benchmark_starters_fan_out_clustered_bar_graph.svg" alt="Test img" /></p>
 
 <h3 id="footnotes"><strong>Footnotes</strong></h3>
 
@@ -183,6 +209,9 @@ Now for the real solutions.</p>
     </li>
     <li id="fn:11" role="doc-endnote">
       <p><a href="https://www.vice.com/en/article/how-the-front-office-analyst-took-over-the-nba/">embracing analytics</a> <a href="#fnref:11" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:13" role="doc-endnote">
+      <p><a href="https://www.nba.com/nuggets/features/junior_bridgeman_20100610.html">median NBA career</a> <a href="#fnref:13" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
     </li>
     <li id="fn:12" role="doc-endnote">
       <p><a href="https://www.ap.org/news-highlights/spotlights/2024/shorter-games-more-running-more-action-two-years-in-mlbs-rule-changes-have-provided-a-jolt/#:~:text=Baseball%20rule%20changes%20having%20tangible%20impact&amp;text=The%20average%20game%20time%20has,Youth%20participation%20is%20spiking.">MLB … model of success</a> <a href="#fnref:12" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
