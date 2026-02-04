@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Projects | StefaNN</title>
+<meta name="generator" content="Jekyll v3.10.0" />
+<meta property="og:title" content="Projects" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Stefan Pate’s personal website and blog." />
+<meta property="og:description" content="Stefan Pate’s personal website and blog." />
+<link rel="canonical" href="http://localhost:4000/projects/" />
+<meta property="og:url" content="http://localhost:4000/projects/" />
+<meta property="og:site_name" content="StefaNN" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Projects" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Stefan Pate’s personal website and blog.","headline":"Projects","url":"http://localhost:4000/projects/"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="StefaNN" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">StefaNN</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a><a class="page-link" href="/projects/">Projects</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post">
+
+  <header class="post-header">
+    <h1 class="post-title">Projects</h1>
+  </header>
+
+  <div class="post-content">
+    <h2 id="reaction-center-graph-neural-network-rc-gnn"><a href="https://www.biorxiv.org/content/10.1101/2025.06.22.660952v2">Reaction center Graph Neural Network (RC-GNN)</a></h2>
+
+<p><img src="/assets/imgs/projects/rcgnn_key_figure.svg" alt="Project visualization" /></p>
+
+<p><span style="display: inline-block; background-color: #22c55e; color: white; padding: 4px 12px; border-radius: 6px; font-weight: bold; font-size: 14px;">Research</span></p>
+
+<p><strong>Overview:</strong>
+At the time we began this project, we believed enzyme function prediction to be needlessly constrained by proxy. Several efforts had focused on predicting Enzyme Commission number or matching an enzyme with its substrate only. We and others have since shown that one can successfully match enzymes with full, balanced reactions by jointly embedding them into vector space. The enzyme encoder makes use of a protein language model, <a href="https://github.com/facebookresearch/esm">ESM</a>. The reaction encoder uses a Graph Neural Network implemented by <a href="https://github.com/chemprop/chemprop">Chemprop</a>. Reaction graphs are peculiar in that they can consist of unconnected subgraphs which nonetheless have important physical interactions amongst each other and with enzyme residues. We developed several simple solutions to this issue involving graph augmentation around the reaction center. Additionally we benchmark our model designs to a condensed graph of reactions scheme and several other models in literature.</p>
+
+<hr />
+
+<h2 id="ergochemics"><a href="https://github.com/stefanpate/ergochemics">Ergochemics</a></h2>
+
+<p><img src="/assets/imgs/projects/ergochemics_logo.png" alt="Project visualization" width="300px" class="center" /></p>
+
+<p><span style="display: inline-block; background-color: #a855f7; color: white; padding: 4px 12px; border-radius: 6px; font-weight: bold; font-size: 14px;">Resource</span></p>
+
+<p><strong>Overview:</strong>
+Ergochemics (ergonomics + cheminformatics) is a collection of <a href="https://www.rdkit.org/">RDKit</a> functionality that I found myself using again and again across projects. I find packaging them up in this way to be very convenient and I hope you do too. There are several modules:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Module</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ergochemics.draw</code></td>
+      <td>Convenient drawing functions for molecules and reactions.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ergochemics.mapping</code></td>
+      <td>For mapping reaction rules to reactions, generating atom-mapped reactions, and extracting reaction centers.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ergochemics.standardize</code></td>
+      <td>Customizable molecule and reaction standardization techniques.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">ergochemics.similarity</code></td>
+      <td>Featurization and similarity for molecules and reactions.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Basic usage is explained in a pair of example notebooks in the repository linked above. The package is also pip installable:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pip install ergochemics
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="enzymatic-reaction-data"><a href="https://github.com/stefanpate/enz-rxn-data">Enzymatic reaction data</a></h2>
+
+<p><img src="/assets/imgs/projects/enz_rxn_logo.png" alt="Project visualization" width="500px" class="center" /></p>
+
+<p><span style="display: inline-block; background-color: #a855f7; color: white; padding: 4px 12px; border-radius: 6px; font-weight: bold; font-size: 14px;">Resource</span></p>
+
+<p><strong>Overview:</strong>
+This repository contains code to pull high-quality enzymatic reaction data from several sources. <a href="https://www.rhea-db.org/">Rhea</a> and <a href="https://www.uniprot.org/">UniProt</a> jointly index reactions and their protein catalysts. Their annotations are organized, transparent, and highly useful. The code here merely merges the two into a convenient set of tables. In addition to overall reactions, we’ve found mechanistic level data - elementary reaction steps - very useful for our work in computer-aided synthesis planning. The repository additionally pulls this data from the <a href="https://www.ebi.ac.uk/thornton-srv/m-csa/">Mechanism and Catalytic Site Atlas</a>. It does focus on substrates moreso than active site residues but can be modified to pull residues as well.</p>
+
+<hr />
+
+<h2 id="deciding-what-to-eat"><a href="https://www.pnas.org/doi/10.1073/pnas.2513479122">Deciding what to eat</a></h2>
+
+<p><img src="/assets/imgs/projects/putida_ferulate_glucose.jpg" alt="Project visualization" /></p>
+
+<p><span style="display: inline-block; background-color: #22c55e; color: white; padding: 4px 12px; border-radius: 6px; font-weight: bold; font-size: 14px;">Research</span></p>
+
+<p><strong>Overview:</strong>
+This study characterizes in exquisite detail how two different nutrients are metabolized by soil bacteria <em>Pseudomonas putida</em>. <em>Putida</em> become popular among bio-engineers, especially metabolic engineers, due to it’s wide ranging palate, which gives flexibility in the choice of feedstock. The team at the Aristilde Lab show how mass flows around the network of chemical reactions comprising the microbe’s metabolism. Collaborators at the Waldbauer Lab measured the abundances of the enzymes catalyzing all these reactions. Others at the Guss and Nikel labs painstakingly prepared gene knockouts and measured enzyme kinetics to help sharpen our hypotheses on metabolic function.</p>
+
+<p><strong>My Role:</strong>
+Under the expert guidance of Niall Mangan, I formulated a simple model with the intention of making quantitative a hypothesis that Ludmilla Aristilde had about the control point of the metabolic network in the face of changing nutrient abundance. In experiments, <em>Putida</em> would cease to grow after glucose was removed, and ferulate added to the media (or vice versa). This quiet period is often referred to as the lag phase of growth. We hypothesized that during this period the abundances of one or a few key enzymes were changing to prepare metabolism to process the new nutrient. Notwithstanding the cutting-edge technology available to th group, there remained several unmeasured parameters including absolute protein concentrations and kinetic parameters. We therefore took the approach of sweeping parameter space with our numerical simulations and mapping out for which values of our unknown parameters our hypothesis should hold.</p>
+
+<hr />
+
+<h2 id="neuromodulating-between-contexts"><a href="https://www.biorxiv.org/content/10.1101/2021.05.31.446462v3.full">Neuromodulating between contexts</a></h2>
+
+<p><img src="/assets/imgs/projects/neuromod_key_figure.png" alt="Neuromodulation Project Overview" /></p>
+
+<p><span style="display: inline-block; background-color: #22c55e; color: white; padding: 4px 12px; border-radius: 6px; font-weight: bold; font-size: 14px;">Research</span></p>
+
+<p><strong>Overview:</strong>
+Before transformers, it was uncommon for a neural network to be good at multiple tasks. Rather, each trained network was like a savant. In contrast, real brains can perform many different tasks. The work of Eve Marder and colleagues pushed the field of neuroscience past its “wiring diagram” phase by showing that the particular way a neural circuit was wired up was insufficient to predict its behavior. Variations in the local concentrations of molecules known as neuromodulators could shift the circuit’s behavior between modes. In this work, we conducted experiments with an abstract model of neuromodulation, <em>in silico</em>. By broadcasting a signal to the learned synaptic weight matrix of an RNN, i.e., scaling a group of synaptic strengths, we could shift the RNN between behaviors.</p>
+
+<p><strong>My Role:</strong>
+This was my first project in computational neuroscience. Under the compassionate mentorship of Ben Tsuda, I learned basic skills in training neural networks, using TensorFlow, and so on. I pitched in by running some experiments that sought to push our abstract model of neuromodulation as far as we could in terms of number of unique behavior modes, how many (or how few) synaptic weights we had to scale, etc. Inspired by work from the lab of David Sussillo, I sought an explanation for the RNN behavior - and shifts between behavioral modes - in terms of fixed points. I found that there were not always (even approximate) fixed points, which turned out to be a good lesson in it’s own way. The output space had many fewer dimensions than the hidden layer space of our RNNs, so there were many ways the neural activity vector could wander around while the output was none the wiser.</p>
+
+<hr />
+
+  </div>
+
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">StefaNN</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">StefaNN</li><li><a class="u-email" href="mailto:stefanpate94@gmail.com">stefanpate94@gmail.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/stefanpate"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">stefanpate</span></a></li><li><a href="https://www.linkedin.com/in/stefan-pate-7b4765129"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#linkedin"></use></svg> <span class="username">stefan-pate-7b4765129</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Stefan Pate&#39;s personal website and blog.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
