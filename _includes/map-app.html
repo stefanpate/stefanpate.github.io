@@ -7,6 +7,10 @@
 		font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
 	}
 
+	@media (min-width: 900px) {
+		.map-widget { margin-right: -212px; }
+	}
+
 	.map-widget__controls {
 		display: flex;
 		flex-wrap: wrap;
@@ -94,21 +98,44 @@
 
 	.map-widget__time { width: 160px; }
 
-	.map-widget__categories {
+	.map-widget__body {
 		display: flex;
-		flex-wrap: wrap;
-		gap: 8px 14px;
-		border: 0;
-		padding: 0;
-		margin: 0;
+		gap: 12px;
+		align-items: stretch;
 	}
 
 	.map-widget__map {
-		width: 100%;
+		flex: 1 1 auto;
+		min-width: 0;
 		height: 60vh;
 		min-height: 360px;
 		border-radius: 6px;
 		overflow: hidden;
+	}
+
+	.map-widget__categories {
+		flex: 0 0 200px;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		border: 1px solid #e2e2e2;
+		background: #f7f7f7;
+		border-radius: 6px;
+		padding: 10px 12px;
+		margin: 0;
+		max-height: 60vh;
+		overflow-y: auto;
+	}
+
+	.map-widget__categories legend {
+		font-weight: 600;
+		font-size: 13px;
+		padding: 0 0 4px 0;
+	}
+
+	@media (max-width: 640px) {
+		.map-widget__body { flex-direction: column; }
+		.map-widget__categories { flex: 0 0 auto; max-height: none; }
 	}
 
 	.map-widget__status {
@@ -155,8 +182,12 @@
 			<input type="range" class="map-widget__time" min="5" max="45" step="5" value="20" />
 			<span class="map-widget__time-readout">20 min</span>
 		</label>
+	</form>
+	<div class="map-widget__body">
+		<div class="map-widget__map" id="post-map"></div>
 		<fieldset class="map-widget__categories">
-			<label><input type="checkbox" value="grocery"> Groceries</label>
+			<legend>Categories</legend>
+			<label><input type="checkbox" value="grocery" checked> Groceries</label>
 			<label><input type="checkbox" value="restaurant" checked> Restaurants</label>
 			<label><input type="checkbox" value="coffee" checked> Coffee</label>
 			<label><input type="checkbox" value="cafe"> Cafes</label>
@@ -167,16 +198,15 @@
 			<label><input type="checkbox" value="school"> Schools</label>
 			<label><input type="checkbox" value="playground"> Playgrounds</label>
 			<label><input type="checkbox" value="fitness_center"> Gyms</label>
-			<label><input type="checkbox" value="shopping"> Shopping</label>
+			<label><input type="checkbox" value="shopping" checked> Shopping</label>
 			<label><input type="checkbox" value="pharmacy"> Pharmacies</label>
 			<label><input type="checkbox" value="post_office"> Post offices</label>
 			<label><input type="checkbox" value="hardware_store"> Hardware stores</label>
-			<label><input type="checkbox" value="library"> Libraries</label>
-			<label><input type="checkbox" value="cinema"> Cinemas</label>
+			<label><input type="checkbox" value="library" checked> Libraries</label>
+			<label><input type="checkbox" value="cinema" checked> Cinemas</label>
 			<label><input type="checkbox" value="museum"> Museums</label>
 		</fieldset>
-	</form>
-	<div class="map-widget__map" id="post-map"></div>
+	</div>
 	<div class="map-widget__status" role="status" aria-live="polite"></div>
 </div>
 
@@ -546,7 +576,9 @@
 			});
 	}
 
-	map.on("click", function (e) {
+	map.doubleClickZoom.disable();
+	map.on("dblclick", function (e) {
+		e.preventDefault();
 		var poiLayerIds = categoryBoxes.map(function (b) { return "pois-" + b.value; })
 			.filter(function (id) { return !!map.getLayer(id); });
 		if (poiLayerIds.length) {
