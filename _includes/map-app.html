@@ -24,13 +24,60 @@
 		gap: 6px;
 	}
 
-	.map-widget__address {
+	.map-widget__address-wrap {
+		position: relative;
 		flex: 1 1 220px;
 		min-width: 180px;
+	}
+
+	.map-widget__address {
+		width: 100%;
+		box-sizing: border-box;
 		padding: 6px 10px;
 		border: 1px solid #ccc;
 		border-radius: 4px;
 		font-size: 14px;
+	}
+
+	.map-widget__suggestions {
+		position: absolute;
+		top: 100%;
+		left: 0;
+		right: 0;
+		background: #fff;
+		border: 1px solid #ccc;
+		border-top: 0;
+		border-radius: 0 0 4px 4px;
+		max-height: 240px;
+		overflow-y: auto;
+		z-index: 5;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+	}
+
+	.map-widget__suggestions li {
+		padding: 6px 10px;
+		cursor: pointer;
+		font-size: 14px;
+	}
+
+	.map-widget__suggestions li:hover,
+	.map-widget__suggestions li[aria-selected="true"] {
+		background: #eef3ff;
+	}
+
+	.map-widget__suggestions--hidden { display: none; }
+
+	.map-widget__cat-dot {
+		display: inline-block;
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+		border: 1px solid rgba(0,0,0,0.15);
+		margin-right: 2px;
+		vertical-align: middle;
 	}
 
 	.map-widget__submit {
@@ -45,7 +92,7 @@
 
 	.map-widget__submit:hover { background: #1558c4; }
 
-	.map-widget__radius { width: 160px; }
+	.map-widget__time { width: 160px; }
 
 	.map-widget__categories {
 		display: flex;
@@ -96,23 +143,37 @@
 </div>
 {%- else -%}
 
-<div class="map-widget" data-initial-lat="{{ page.map_lat | default: 41.88 }}" data-initial-lng="{{ page.map_lng | default: -87.65 }}" data-initial-zoom="{{ page.map_zoom | default: 12 }}" data-initial-radius="{{ page.map_default_radius_miles | default: 1.0 }}">
+<div class="map-widget" data-initial-lat="{{ page.map_lat | default: 41.88 }}" data-initial-lng="{{ page.map_lng | default: -87.65 }}" data-initial-zoom="{{ page.map_zoom | default: 12 }}" data-initial-time="{{ page.map_default_time_minutes | default: 20 }}">
 	<form class="map-widget__controls" onsubmit="return false;">
-		<input type="text" class="map-widget__address" placeholder="Enter an address (e.g. 1600 Pennsylvania Ave, Washington, DC)" aria-label="Address" />
+		<div class="map-widget__address-wrap">
+			<input type="text" class="map-widget__address" placeholder="Enter an address (e.g. 1600 Pennsylvania Ave, Washington, DC)" aria-label="Address" autocomplete="off" />
+			<ul class="map-widget__suggestions map-widget__suggestions--hidden" role="listbox"></ul>
+		</div>
 		<button type="submit" class="map-widget__submit">Go</button>
 		<label>
-			Radius:
-			<input type="range" class="map-widget__radius" min="0.25" max="5" step="0.25" value="1" />
-			<span class="map-widget__radius-readout">1.00 mi</span>
+			One-way travel time:
+			<input type="range" class="map-widget__time" min="5" max="45" step="5" value="20" />
+			<span class="map-widget__time-readout">20 min</span>
 		</label>
 		<fieldset class="map-widget__categories">
-			<label><input type="checkbox" value="coffee" checked> Coffee</label>
-			<label><input type="checkbox" value="restaurant" checked> Restaurants</label>
-			<label><input type="checkbox" value="park" checked> Parks</label>
-			<label><input type="checkbox" value="bar"> Bars</label>
 			<label><input type="checkbox" value="grocery"> Groceries</label>
+			<label><input type="checkbox" value="restaurant" checked> Restaurants</label>
+			<label><input type="checkbox" value="coffee" checked> Coffee</label>
+			<label><input type="checkbox" value="cafe"> Cafes</label>
+			<label><input type="checkbox" value="bakery"> Bakeries</label>
+			<label><input type="checkbox" value="bar"> Bars</label>
+			<label><input type="checkbox" value="farmers_market"> Farmers markets</label>
+			<label><input type="checkbox" value="park" checked> Parks</label>
 			<label><input type="checkbox" value="school"> Schools</label>
+			<label><input type="checkbox" value="playground"> Playgrounds</label>
 			<label><input type="checkbox" value="fitness_center"> Gyms</label>
+			<label><input type="checkbox" value="shopping"> Shopping</label>
+			<label><input type="checkbox" value="pharmacy"> Pharmacies</label>
+			<label><input type="checkbox" value="post_office"> Post offices</label>
+			<label><input type="checkbox" value="hardware_store"> Hardware stores</label>
+			<label><input type="checkbox" value="library"> Libraries</label>
+			<label><input type="checkbox" value="cinema"> Cinemas</label>
+			<label><input type="checkbox" value="museum"> Museums</label>
 		</fieldset>
 	</form>
 	<div class="map-widget__map" id="post-map"></div>
@@ -136,20 +197,23 @@
 		parseFloat(widget.dataset.initialLat)
 	];
 	var initialZoom = parseFloat(widget.dataset.initialZoom);
-	var initialRadius = parseFloat(widget.dataset.initialRadius);
+	var initialTime = parseFloat(widget.dataset.initialTime);
 
 	var addressInput = widget.querySelector(".map-widget__address");
+	var suggestionsEl = widget.querySelector(".map-widget__suggestions");
 	var submitBtn = widget.querySelector(".map-widget__submit");
 	var form = widget.querySelector(".map-widget__controls");
-	var radiusSlider = widget.querySelector(".map-widget__radius");
-	var radiusReadout = widget.querySelector(".map-widget__radius-readout");
+	var timeSlider = widget.querySelector(".map-widget__time");
+	var timeReadout = widget.querySelector(".map-widget__time-readout");
 	var categoryBoxes = Array.prototype.slice.call(
 		widget.querySelectorAll(".map-widget__categories input[type='checkbox']")
 	);
 	var statusEl = widget.querySelector(".map-widget__status");
 
-	radiusSlider.value = String(initialRadius);
-	radiusReadout.textContent = Number(initialRadius).toFixed(2) + " mi";
+	timeSlider.value = String(initialTime);
+	timeReadout.textContent = Math.round(initialTime) + " min";
+
+	var ROUTING_PROFILE = "cycling";
 
 	var CATEGORY_COLORS = {
 		coffee: "#8b5a2b",
@@ -158,16 +222,50 @@
 		bar: "#9c36b5",
 		grocery: "#1971c2",
 		school: "#f08c00",
-		fitness_center: "#e03131"
+		fitness_center: "#e03131",
+		shopping: "#c2255c",
+		pharmacy: "#12b886",
+		library: "#5f3dc4",
+		bakery: "#c97a2b",
+		post_office: "#495057",
+		cafe: "#a0522d",
+		playground: "#37b24d",
+		hardware_store: "#5c940d",
+		farmers_market: "#e8590c",
+		cinema: "#7048e8",
+		museum: "#0b7285"
 	};
+
+	categoryBoxes.forEach(function (box) {
+		var color = CATEGORY_COLORS[box.value] || "#444";
+		var dot = document.createElement("span");
+		dot.className = "map-widget__cat-dot";
+		dot.style.background = color;
+		box.parentNode.insertBefore(dot, box.nextSibling);
+	});
 
 	var state = {
 		center: initialCenter.slice(),
-		radiusMiles: initialRadius,
-		hasGeocoded: false
+		timeMinutes: initialTime,
+		hasGeocoded: false,
+		boundary: null,
+		boundaryKey: null
 	};
 
+	var isoCache = new Map();
+
 	var cache = new Map();
+
+	var isoRequestSeq = 0;
+
+	var sessionToken = (function () {
+		if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+		return "s-" + Date.now() + "-" + Math.random().toString(36).slice(2);
+	})();
+
+	var suggestions = [];
+	var activeSuggestion = -1;
+	var suggestSeq = 0;
 
 	function setStatus(msg, isError) {
 		statusEl.textContent = msg || "";
@@ -182,6 +280,25 @@
 	});
 
 	map.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+	var centerMarker = null;
+
+	function setCenterMarker(lngLat, label) {
+		if (!centerMarker) {
+			centerMarker = new mapboxgl.Marker({ color: "#1f6feb" })
+				.setLngLat(lngLat)
+				.addTo(map);
+		} else {
+			centerMarker.setLngLat(lngLat);
+		}
+		if (label) {
+			centerMarker.setPopup(
+				new mapboxgl.Popup({ offset: 24 }).setHTML(
+					'<div class="map-widget__poi-popup"><strong>' + escapeHtml(label) + '</strong></div>'
+				)
+			);
+		}
+	}
 
 	map.on("error", function (e) {
 		var err = e && e.error;
@@ -252,14 +369,15 @@
 
 	var debouncedRefresh = debounce(function () {
 		if (!state.hasGeocoded) return;
-		redrawCircle();
-		refreshAllPois();
+		redrawIsochrone().then(function () {
+			refreshAllPois();
+			setStatus("");
+		}).catch(function () {});
 	}, 300);
 
-	radiusSlider.addEventListener("input", function () {
-		state.radiusMiles = parseFloat(radiusSlider.value);
-		radiusReadout.textContent = state.radiusMiles.toFixed(2) + " mi";
-		if (state.hasGeocoded) redrawCircle();
+	timeSlider.addEventListener("input", function () {
+		state.timeMinutes = parseFloat(timeSlider.value);
+		timeReadout.textContent = Math.round(state.timeMinutes) + " min";
 		debouncedRefresh();
 	});
 
@@ -273,6 +391,169 @@
 				if (src) src.setData(emptyFC());
 			}
 		});
+	});
+
+	function applyResolvedLocation(lngLat, label) {
+		state.center = lngLat;
+		state.hasGeocoded = true;
+		setCenterMarker(state.center, label);
+		map.flyTo({ center: state.center, zoom: Math.max(map.getZoom(), 13) });
+		return redrawIsochrone().then(function () {
+			refreshAllPois();
+			setStatus(label ? "Showing results near " + label : "");
+		}).catch(function () {});
+	}
+
+	function hideSuggestions() {
+		suggestionsEl.classList.add("map-widget__suggestions--hidden");
+		suggestionsEl.innerHTML = "";
+		suggestions = [];
+		activeSuggestion = -1;
+	}
+
+	function renderSuggestions() {
+		suggestionsEl.innerHTML = "";
+		if (!suggestions.length) {
+			hideSuggestions();
+			return;
+		}
+		suggestions.forEach(function (s, i) {
+			var li = document.createElement("li");
+			li.setAttribute("role", "option");
+			li.setAttribute("data-index", String(i));
+			var primary = s.name || s.place_formatted || "";
+			var secondary = s.place_formatted && s.place_formatted !== primary ? s.place_formatted : "";
+			li.innerHTML = '<strong>' + escapeHtml(primary) + '</strong>' +
+				(secondary ? '<div style="color:#666;font-size:12px;">' + escapeHtml(secondary) + '</div>' : '');
+			if (i === activeSuggestion) li.setAttribute("aria-selected", "true");
+			li.addEventListener("mousedown", function (ev) {
+				ev.preventDefault();
+				selectSuggestion(i);
+			});
+			suggestionsEl.appendChild(li);
+		});
+		suggestionsEl.classList.remove("map-widget__suggestions--hidden");
+	}
+
+	function fetchSuggestions(q) {
+		var mySeq = ++suggestSeq;
+		var url = "https://api.mapbox.com/search/searchbox/v1/suggest" +
+			"?q=" + encodeURIComponent(q) +
+			"&limit=5" +
+			"&session_token=" + encodeURIComponent(sessionToken) +
+			"&proximity=" + state.center[0] + "," + state.center[1] +
+			"&access_token=" + encodeURIComponent(token);
+		fetch(url)
+			.then(function (r) { return r.ok ? r.json() : null; })
+			.then(function (data) {
+				if (mySeq !== suggestSeq || !data) return;
+				suggestions = data.suggestions || [];
+				activeSuggestion = -1;
+				renderSuggestions();
+			})
+			.catch(function (err) { console.error("Suggest failed:", err); });
+	}
+
+	var debouncedSuggest = debounce(function (q) { fetchSuggestions(q); }, 200);
+
+	function selectSuggestion(i) {
+		var s = suggestions[i];
+		if (!s) return;
+		var label = s.place_formatted || s.name || "";
+		addressInput.value = label;
+		hideSuggestions();
+		setStatus("Finding address…");
+		var url = "https://api.mapbox.com/search/searchbox/v1/retrieve/" +
+			encodeURIComponent(s.mapbox_id) +
+			"?session_token=" + encodeURIComponent(sessionToken) +
+			"&access_token=" + encodeURIComponent(token);
+		fetch(url)
+			.then(function (r) {
+				if (!r.ok) {
+					return r.text().then(function (body) {
+						throw new Error("HTTP " + r.status + " – " + body.slice(0, 200));
+					});
+				}
+				return r.json();
+			})
+			.then(function (data) {
+				var f = data && data.features && data.features[0];
+				if (!f || !f.geometry) {
+					setStatus("Could not retrieve that address.", true);
+					return;
+				}
+				var resolvedLabel = (f.properties && (f.properties.full_address || f.properties.place_formatted || f.properties.name)) || label;
+				applyResolvedLocation(f.geometry.coordinates, resolvedLabel);
+			})
+			.catch(function (err) {
+				console.error("Retrieve failed:", err);
+				setStatus("Address lookup failed: " + err.message, true);
+			});
+	}
+
+	addressInput.addEventListener("input", function () {
+		var q = addressInput.value.trim();
+		if (q.length < 2) { hideSuggestions(); return; }
+		debouncedSuggest(q);
+	});
+
+	addressInput.addEventListener("keydown", function (e) {
+		var visible = !suggestionsEl.classList.contains("map-widget__suggestions--hidden");
+		if (e.key === "ArrowDown" && visible && suggestions.length) {
+			e.preventDefault();
+			activeSuggestion = (activeSuggestion + 1) % suggestions.length;
+			renderSuggestions();
+		} else if (e.key === "ArrowUp" && visible && suggestions.length) {
+			e.preventDefault();
+			activeSuggestion = (activeSuggestion - 1 + suggestions.length) % suggestions.length;
+			renderSuggestions();
+		} else if (e.key === "Enter") {
+			if (visible && activeSuggestion >= 0) {
+				e.preventDefault();
+				selectSuggestion(activeSuggestion);
+			}
+		} else if (e.key === "Escape") {
+			hideSuggestions();
+		}
+	});
+
+	addressInput.addEventListener("blur", function () {
+		setTimeout(hideSuggestions, 150);
+	});
+
+	function reverseGeocodeAndPlace(lngLat) {
+		setStatus("Looking up location…");
+		var url = "https://api.mapbox.com/geocoding/v5/mapbox.places/" +
+			lngLat[0] + "," + lngLat[1] +
+			".json?limit=1&access_token=" + encodeURIComponent(token);
+		fetch(url)
+			.then(function (r) { return r.ok ? r.json() : null; })
+			.then(function (data) {
+				var label;
+				if (data && data.features && data.features[0]) {
+					label = data.features[0].place_name;
+				} else {
+					label = lngLat[0].toFixed(5) + ", " + lngLat[1].toFixed(5);
+				}
+				addressInput.value = label;
+				applyResolvedLocation(lngLat, label);
+			})
+			.catch(function (err) {
+				console.error("Reverse geocode failed:", err);
+				var label = lngLat[0].toFixed(5) + ", " + lngLat[1].toFixed(5);
+				addressInput.value = label;
+				applyResolvedLocation(lngLat, label);
+			});
+	}
+
+	map.on("click", function (e) {
+		var poiLayerIds = categoryBoxes.map(function (b) { return "pois-" + b.value; })
+			.filter(function (id) { return !!map.getLayer(id); });
+		if (poiLayerIds.length) {
+			var hits = map.queryRenderedFeatures(e.point, { layers: poiLayerIds });
+			if (hits && hits.length) return;
+		}
+		reverseGeocodeAndPlace([e.lngLat.lng, e.lngLat.lat]);
 	});
 
 	function geocodeAndUpdate(addr) {
@@ -297,12 +578,7 @@
 					return;
 				}
 				var f = data.features[0];
-				state.center = f.center;
-				state.hasGeocoded = true;
-				map.flyTo({ center: state.center, zoom: Math.max(map.getZoom(), 13) });
-				redrawCircle();
-				refreshAllPois();
-				setStatus("Showing results near " + (f.place_name || addr));
+				applyResolvedLocation(f.center, f.place_name || addr);
 			})
 			.catch(function (err) {
 				console.error("Geocoding failed:", err);
@@ -310,9 +586,60 @@
 			});
 	}
 
-	function redrawCircle() {
-		var poly = turf.circle(state.center, state.radiusMiles, { units: "miles", steps: 64 });
-		map.getSource("circle").setData(poly);
+	function redrawIsochrone() {
+		var centerKey = state.center.map(round5).join(",");
+		var timeKey = String(Math.round(state.timeMinutes));
+		var key = "iso|" + ROUTING_PROFILE + "|" + centerKey + "|" + timeKey;
+		var reqId = ++isoRequestSeq;
+		if (isoCache.has(key)) {
+			var cached = isoCache.get(key);
+			state.boundary = cached;
+			state.boundaryKey = key;
+			map.getSource("circle").setData(cached);
+			return Promise.resolve(cached);
+		}
+		var minutes = Math.max(1, Math.min(60, Math.round(state.timeMinutes)));
+		var params = [
+			"contours_minutes=" + minutes,
+			"polygons=true",
+			"denoise=1",
+			"generalize=50",
+			"access_token=" + encodeURIComponent(token)
+		];
+		var url = "https://api.mapbox.com/isochrone/v1/mapbox/" + ROUTING_PROFILE +
+			"/" + state.center[0] + "," + state.center[1] + "?" + params.join("&");
+		setStatus("Computing reachable area…");
+		return fetch(url)
+			.then(function (r) {
+				if (!r.ok) {
+					return r.text().then(function (body) {
+						throw new Error("HTTP " + r.status + " " + r.statusText + " – " + body.slice(0, 200));
+					});
+				}
+				return r.json();
+			})
+			.then(function (data) {
+				var fc = (data && data.type === "FeatureCollection") ? data : emptyFC();
+				isoCache.set(key, fc);
+				if (reqId !== isoRequestSeq) return fc;
+				state.boundary = fc;
+				state.boundaryKey = key;
+				map.getSource("circle").setData(fc);
+				return fc;
+			})
+			.catch(function (err) {
+				console.error("Isochrone fetch failed:", err);
+				if (reqId === isoRequestSeq) {
+					setStatus("Reachable-area fetch failed: " + err.message, true);
+				}
+				throw err;
+			});
+	}
+
+	function boundaryPolygon() {
+		var fc = state.boundary;
+		if (!fc || !fc.features || !fc.features.length) return null;
+		return fc.features[0];
 	}
 
 	function refreshAllPois() {
@@ -322,12 +649,14 @@
 	}
 
 	function fetchCategory(cat) {
-		var key = cat + "|" + state.center.map(round5).join(",") + "|" + state.radiusMiles.toFixed(2);
+		var polyFeature = boundaryPolygon();
+		if (!polyFeature) return;
+		var key = cat + "|" + state.boundaryKey;
 		if (cache.has(key)) {
 			applyPoiData(cat, cache.get(key));
 			return;
 		}
-		var bbox = turf.bbox(turf.circle(state.center, state.radiusMiles, { units: "miles", steps: 32 }));
+		var bbox = turf.bbox(polyFeature);
 		var url =
 			"https://api.mapbox.com/search/searchbox/v1/category/" +
 			encodeURIComponent(cat) +
@@ -347,12 +676,10 @@
 			.then(function (data) {
 				var features = (data.features || []).filter(function (f) {
 					if (!f.geometry || f.geometry.type !== "Point") return false;
-					var d = turf.distance(
-						turf.point(state.center),
+					return turf.booleanPointInPolygon(
 						turf.point(f.geometry.coordinates),
-						{ units: "miles" }
+						polyFeature
 					);
-					return d <= state.radiusMiles;
 				}).map(function (f) {
 					return {
 						type: "Feature",
