@@ -28,6 +28,12 @@ theme: minima
 plugins:
   - jekyll-feed
 
+# Dev server settings (affects `jekyll serve`, not builds)
+host: localhost
+
+# API keys
+mapbox_access_token: "REDACTED_MAPBOX_TOKEN"
+
 # Exclude from processing.
 # The following items will not be processed, by default. Create a custom list
 # to override the default setting.

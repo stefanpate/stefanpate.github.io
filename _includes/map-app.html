@@ -1,0 +1,404 @@
+<style>
+	.map-widget {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		margin: 16px 0;
+		font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+	}
+
+	.map-widget__controls {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 12px 16px;
+		align-items: center;
+		padding: 12px;
+		background: #f7f7f7;
+		border: 1px solid #e2e2e2;
+		border-radius: 6px;
+	}
+
+	.map-widget__controls label {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	.map-widget__address {
+		flex: 1 1 220px;
+		min-width: 180px;
+		padding: 6px 10px;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		font-size: 14px;
+	}
+
+	.map-widget__submit {
+		padding: 6px 14px;
+		background: #1f6feb;
+		color: #fff;
+		border: 0;
+		border-radius: 4px;
+		cursor: pointer;
+		font-size: 14px;
+	}
+
+	.map-widget__submit:hover { background: #1558c4; }
+
+	.map-widget__radius { width: 160px; }
+
+	.map-widget__categories {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px 14px;
+		border: 0;
+		padding: 0;
+		margin: 0;
+	}
+
+	.map-widget__map {
+		width: 100%;
+		height: 60vh;
+		min-height: 360px;
+		border-radius: 6px;
+		overflow: hidden;
+	}
+
+	.map-widget__status {
+		min-height: 18px;
+		font-size: 13px;
+		color: #555;
+	}
+
+	.map-widget__status--error { color: #b3261e; }
+
+	.map-widget--missing-token {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: #f2f2f2;
+		color: #444;
+		padding: 24px;
+		text-align: center;
+		border-radius: 6px;
+		min-height: 120px;
+	}
+
+	.map-widget__poi-popup { font-size: 13px; }
+	.map-widget__poi-popup strong { display: block; margin-bottom: 2px; }
+</style>
+
+{%- assign mapbox_token = site.mapbox_access_token | default: "" -%}
+
+{%- if mapbox_token == "" -%}
+<div class="map-widget map-widget--missing-token">
+	Missing Mapbox access token. Set <code>mapbox_access_token</code> in <code>_config.yml</code>.
+</div>
+{%- else -%}
+
+<div class="map-widget" data-initial-lat="{{ page.map_lat | default: 41.88 }}" data-initial-lng="{{ page.map_lng | default: -87.65 }}" data-initial-zoom="{{ page.map_zoom | default: 12 }}" data-initial-radius="{{ page.map_default_radius_miles | default: 1.0 }}">
+	<form class="map-widget__controls" onsubmit="return false;">
+		<input type="text" class="map-widget__address" placeholder="Enter an address (e.g. 1600 Pennsylvania Ave, Washington, DC)" aria-label="Address" />
+		<button type="submit" class="map-widget__submit">Go</button>
+		<label>
+			Radius:
+			<input type="range" class="map-widget__radius" min="0.25" max="5" step="0.25" value="1" />
+			<span class="map-widget__radius-readout">1.00 mi</span>
+		</label>
+		<fieldset class="map-widget__categories">
+			<label><input type="checkbox" value="coffee" checked> Coffee</label>
+			<label><input type="checkbox" value="restaurant" checked> Restaurants</label>
+			<label><input type="checkbox" value="park" checked> Parks</label>
+			<label><input type="checkbox" value="bar"> Bars</label>
+			<label><input type="checkbox" value="grocery"> Groceries</label>
+			<label><input type="checkbox" value="school"> Schools</label>
+			<label><input type="checkbox" value="fitness_center"> Gyms</label>
+		</fieldset>
+	</form>
+	<div class="map-widget__map" id="post-map"></div>
+	<div class="map-widget__status" role="status" aria-live="polite"></div>
+</div>
+
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.8.0/mapbox-gl.css" rel="stylesheet" />
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.8.0/mapbox-gl.js"></script>
+<script src="https://unpkg.com/@turf/turf@7.1.0/turf.min.js"></script>
+
+<script>
+(function () {
+	var widget = document.querySelector(".map-widget");
+	if (!widget || typeof mapboxgl === "undefined") return;
+
+	var token = "{{ mapbox_token }}";
+	mapboxgl.accessToken = token;
+
+	var initialCenter = [
+		parseFloat(widget.dataset.initialLng),
+		parseFloat(widget.dataset.initialLat)
+	];
+	var initialZoom = parseFloat(widget.dataset.initialZoom);
+	var initialRadius = parseFloat(widget.dataset.initialRadius);
+
+	var addressInput = widget.querySelector(".map-widget__address");
+	var submitBtn = widget.querySelector(".map-widget__submit");
+	var form = widget.querySelector(".map-widget__controls");
+	var radiusSlider = widget.querySelector(".map-widget__radius");
+	var radiusReadout = widget.querySelector(".map-widget__radius-readout");
+	var categoryBoxes = Array.prototype.slice.call(
+		widget.querySelectorAll(".map-widget__categories input[type='checkbox']")
+	);
+	var statusEl = widget.querySelector(".map-widget__status");
+
+	radiusSlider.value = String(initialRadius);
+	radiusReadout.textContent = Number(initialRadius).toFixed(2) + " mi";
+
+	var CATEGORY_COLORS = {
+		coffee: "#8b5a2b",
+		restaurant: "#d9480f",
+		park: "#2f9e44",
+		bar: "#9c36b5",
+		grocery: "#1971c2",
+		school: "#f08c00",
+		fitness_center: "#e03131"
+	};
+
+	var state = {
+		center: initialCenter.slice(),
+		radiusMiles: initialRadius,
+		hasGeocoded: false
+	};
+
+	var cache = new Map();
+
+	function setStatus(msg, isError) {
+		statusEl.textContent = msg || "";
+		statusEl.classList.toggle("map-widget__status--error", !!isError);
+	}
+
+	var map = new mapboxgl.Map({
+		container: "post-map",
+		style: "mapbox://styles/mapbox/streets-v12",
+		center: initialCenter,
+		zoom: initialZoom
+	});
+
+	map.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+	map.on("error", function (e) {
+		var err = e && e.error;
+		var msg = err && err.message ? err.message : "Unknown map error";
+		var status = err && err.status ? " [HTTP " + err.status + "]" : "";
+		console.error("Mapbox error:", err);
+		setStatus("Map error" + status + ": " + msg, true);
+	});
+
+	map.on("load", function () {
+		map.addSource("circle", { type: "geojson", data: emptyFC() });
+		map.addLayer({
+			id: "circle-fill",
+			type: "fill",
+			source: "circle",
+			paint: { "fill-color": "#1f6feb", "fill-opacity": 0.12 }
+		});
+		map.addLayer({
+			id: "circle-line",
+			type: "line",
+			source: "circle",
+			paint: { "line-color": "#1f6feb", "line-width": 2 }
+		});
+
+		categoryBoxes.forEach(function (box) {
+			var cat = box.value;
+			map.addSource("pois-" + cat, { type: "geojson", data: emptyFC() });
+			map.addLayer({
+				id: "pois-" + cat,
+				type: "circle",
+				source: "pois-" + cat,
+				paint: {
+					"circle-radius": 6,
+					"circle-color": CATEGORY_COLORS[cat] || "#444",
+					"circle-stroke-color": "#fff",
+					"circle-stroke-width": 1.5
+				}
+			});
+
+			map.on("click", "pois-" + cat, function (e) {
+				var f = e.features && e.features[0];
+				if (!f) return;
+				new mapboxgl.Popup()
+					.setLngLat(f.geometry.coordinates)
+					.setHTML(
+						'<div class="map-widget__poi-popup">' +
+						'<strong>' + escapeHtml(f.properties.name || "(unnamed)") + '</strong>' +
+						escapeHtml(f.properties.category || cat) +
+						'</div>'
+					)
+					.addTo(map);
+			});
+			map.on("mouseenter", "pois-" + cat, function () { map.getCanvas().style.cursor = "pointer"; });
+			map.on("mouseleave", "pois-" + cat, function () { map.getCanvas().style.cursor = ""; });
+		});
+	});
+
+	form.addEventListener("submit", function (e) {
+		e.preventDefault();
+		var addr = addressInput.value.trim();
+		if (!addr) return;
+		geocodeAndUpdate(addr);
+	});
+	submitBtn.addEventListener("click", function (e) {
+		e.preventDefault();
+		form.dispatchEvent(new Event("submit"));
+	});
+
+	var debouncedRefresh = debounce(function () {
+		if (!state.hasGeocoded) return;
+		redrawCircle();
+		refreshAllPois();
+	}, 300);
+
+	radiusSlider.addEventListener("input", function () {
+		state.radiusMiles = parseFloat(radiusSlider.value);
+		radiusReadout.textContent = state.radiusMiles.toFixed(2) + " mi";
+		if (state.hasGeocoded) redrawCircle();
+		debouncedRefresh();
+	});
+
+	categoryBoxes.forEach(function (box) {
+		box.addEventListener("change", function () {
+			var cat = box.value;
+			if (box.checked) {
+				if (state.hasGeocoded) fetchCategory(cat);
+			} else {
+				var src = map.getSource("pois-" + cat);
+				if (src) src.setData(emptyFC());
+			}
+		});
+	});
+
+	function geocodeAndUpdate(addr) {
+		setStatus("Finding address…");
+		var url =
+			"https://api.mapbox.com/geocoding/v5/mapbox.places/" +
+			encodeURIComponent(addr) +
+			".json?limit=1&access_token=" +
+			encodeURIComponent(token);
+		fetch(url)
+			.then(function (r) {
+				if (!r.ok) {
+					return r.text().then(function (body) {
+						throw new Error("HTTP " + r.status + " " + r.statusText + " – " + body.slice(0, 200));
+					});
+				}
+				return r.json();
+			})
+			.then(function (data) {
+				if (!data.features || !data.features.length) {
+					setStatus("No match for that address.", true);
+					return;
+				}
+				var f = data.features[0];
+				state.center = f.center;
+				state.hasGeocoded = true;
+				map.flyTo({ center: state.center, zoom: Math.max(map.getZoom(), 13) });
+				redrawCircle();
+				refreshAllPois();
+				setStatus("Showing results near " + (f.place_name || addr));
+			})
+			.catch(function (err) {
+				console.error("Geocoding failed:", err);
+				setStatus("Geocoding failed: " + err.message, true);
+			});
+	}
+
+	function redrawCircle() {
+		var poly = turf.circle(state.center, state.radiusMiles, { units: "miles", steps: 64 });
+		map.getSource("circle").setData(poly);
+	}
+
+	function refreshAllPois() {
+		categoryBoxes.forEach(function (box) {
+			if (box.checked) fetchCategory(box.value);
+		});
+	}
+
+	function fetchCategory(cat) {
+		var key = cat + "|" + state.center.map(round5).join(",") + "|" + state.radiusMiles.toFixed(2);
+		if (cache.has(key)) {
+			applyPoiData(cat, cache.get(key));
+			return;
+		}
+		var bbox = turf.bbox(turf.circle(state.center, state.radiusMiles, { units: "miles", steps: 32 }));
+		var url =
+			"https://api.mapbox.com/search/searchbox/v1/category/" +
+			encodeURIComponent(cat) +
+			"?proximity=" + state.center[0] + "," + state.center[1] +
+			"&bbox=" + bbox.join(",") +
+			"&limit=25" +
+			"&access_token=" + encodeURIComponent(token);
+		fetch(url)
+			.then(function (r) {
+				if (!r.ok) {
+					return r.text().then(function (body) {
+						throw new Error("HTTP " + r.status + " on category " + cat + " – " + body.slice(0, 200));
+					});
+				}
+				return r.json();
+			})
+			.then(function (data) {
+				var features = (data.features || []).filter(function (f) {
+					if (!f.geometry || f.geometry.type !== "Point") return false;
+					var d = turf.distance(
+						turf.point(state.center),
+						turf.point(f.geometry.coordinates),
+						{ units: "miles" }
+					);
+					return d <= state.radiusMiles;
+				}).map(function (f) {
+					return {
+						type: "Feature",
+						geometry: f.geometry,
+						properties: {
+							name: f.properties && f.properties.name,
+							category: cat
+						}
+					};
+				});
+				var fc = { type: "FeatureCollection", features: features };
+				cache.set(key, fc);
+				applyPoiData(cat, fc);
+			})
+			.catch(function (err) {
+				console.error("POI fetch failed:", err);
+				setStatus("POI fetch failed: " + err.message, true);
+			});
+	}
+
+	function applyPoiData(cat, fc) {
+		var src = map.getSource("pois-" + cat);
+		if (src) src.setData(fc);
+	}
+
+	function emptyFC() {
+		return { type: "FeatureCollection", features: [] };
+	}
+
+	function debounce(fn, ms) {
+		var t = null;
+		return function () {
+			var args = arguments, self = this;
+			clearTimeout(t);
+			t = setTimeout(function () { fn.apply(self, args); }, ms);
+		};
+	}
+
+	function round5(n) { return Math.round(n * 1e5) / 1e5; }
+
+	function escapeHtml(s) {
+		return String(s == null ? "" : s)
+			.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+	}
+})();
+</script>
+
+{%- endif -%}
