@@ -38,14 +38,11 @@ host: localhost
 # For production, the GitHub Actions workflow injects MAPBOX_ACCESS_TOKEN from a repo secret.
 mapbox_access_token: ""
 
-# Exclude from processing.
-# The following items will not be processed, by default. Create a custom list
-# to override the default setting.
-# exclude:
-#   - Gemfile
-#   - Gemfile.lock
-#   - node_modules
-#   - vendor/bundle/
-#   - vendor/cache/
-#   - vendor/gems/
-#   - vendor/ruby/
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - Makefile
+  - README.md
+  - vendor/
+  - node_modules/
+  - .github/
