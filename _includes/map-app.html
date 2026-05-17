@@ -160,6 +160,44 @@
 
 	.map-widget__poi-popup { font-size: 13px; }
 	.map-widget__poi-popup strong { display: block; margin-bottom: 2px; }
+
+	.map-widget__metrics {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
+	.map-widget__metrics--hidden { display: none; }
+
+	.map-widget__metric {
+		flex: 1 1 180px;
+		padding: 8px 12px;
+		background: #f7f7f7;
+		border: 1px solid #e2e2e2;
+		border-radius: 6px;
+		font-size: 13px;
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 8px;
+	}
+
+	.map-widget__metric-label { color: #555; }
+	.map-widget__metric-value { font-weight: 600; font-size: 14px; }
+	.map-widget__metric-value--pending { color: #888; font-weight: 400; }
+	.map-widget__metric-value--positive { color: #b3261e; }
+	.map-widget__metric-value--negative { color: #2f9e44; }
+
+	.map-widget__parking {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		font-size: 12px;
+		color: #666;
+		padding: 0 4px;
+	}
+
+	.map-widget__parking input[type="range"] { width: 100px; }
 </style>
 
 {%- assign mapbox_token = site.mapbox_access_token | default: "" -%}
@@ -183,6 +221,23 @@
 			<span class="map-widget__time-readout">20 min</span>
 		</label>
 	</form>
+	<div class="map-widget__parking">
+		<label>
+			Parking time:
+			<input type="range" class="map-widget__parking-slider" min="0" max="20" step="1" value="5" />
+			<span class="map-widget__parking-readout">5 min</span>
+		</label>
+	</div>
+	<div class="map-widget__metrics map-widget__metrics--hidden" aria-live="polite">
+		<div class="map-widget__metric">
+			<span class="map-widget__metric-label">Walking vs cycling</span>
+			<span class="map-widget__metric-value map-widget__metric-value--walk">—</span>
+		</div>
+		<div class="map-widget__metric">
+			<span class="map-widget__metric-label">Driving vs cycling</span>
+			<span class="map-widget__metric-value map-widget__metric-value--drive">—</span>
+		</div>
+	</div>
 	<div class="map-widget__body">
 		<div class="map-widget__map" id="post-map"></div>
 		<fieldset class="map-widget__categories">
@@ -239,6 +294,19 @@
 		widget.querySelectorAll(".map-widget__categories input[type='checkbox']")
 	);
 	var statusEl = widget.querySelector(".map-widget__status");
+	var metricsEl = widget.querySelector(".map-widget__metrics");
+	var walkValueEl = widget.querySelector(".map-widget__metric-value--walk");
+	var driveValueEl = widget.querySelector(".map-widget__metric-value--drive");
+	var parkingSlider = widget.querySelector(".map-widget__parking-slider");
+	var parkingReadout = widget.querySelector(".map-widget__parking-readout");
+	var parkingMinutes = parseFloat(parkingSlider.value);
+
+	parkingSlider.addEventListener("input", function () {
+		parkingMinutes = parseFloat(parkingSlider.value);
+		parkingReadout.textContent = Math.round(parkingMinutes) + " min";
+		var cached = state.boundaryKey ? matrixCache.get(state.boundaryKey) : null;
+		if (cached) renderMetrics(cached);
+	});
 
 	timeSlider.value = String(initialTime);
 	timeReadout.textContent = Math.round(initialTime) + " min";
@@ -287,6 +355,10 @@
 	var cache = new Map();
 
 	var isoRequestSeq = 0;
+
+	var matrixCache = new Map();
+
+	var matrixRequestSeq = 0;
 
 	var sessionToken = (function () {
 		if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -401,6 +473,7 @@
 		if (!state.hasGeocoded) return;
 		redrawIsochrone().then(function () {
 			refreshAllPois();
+			updateTravelMetrics();
 			setStatus("");
 		}).catch(function () {});
 	}, 300);
@@ -430,6 +503,7 @@
 		map.flyTo({ center: state.center, zoom: Math.max(map.getZoom(), 13) });
 		return redrawIsochrone().then(function () {
 			refreshAllPois();
+			updateTravelMetrics();
 			setStatus(label ? "Showing results near " + label : "");
 		}).catch(function () {});
 	}
@@ -678,6 +752,142 @@
 		categoryBoxes.forEach(function (box) {
 			if (box.checked) fetchCategory(box.value);
 		});
+	}
+
+	function sampleBoundaryPoints(polyFeature, n) {
+		var geom = polyFeature && polyFeature.geometry;
+		if (!geom) return [];
+		var ring;
+		if (geom.type === "Polygon") {
+			ring = geom.coordinates[0];
+		} else if (geom.type === "MultiPolygon") {
+			var best = null;
+			geom.coordinates.forEach(function (poly) {
+				if (!best || poly[0].length > best.length) best = poly[0];
+			});
+			ring = best;
+		} else {
+			return [];
+		}
+		if (!ring || ring.length < 2) return [];
+		var usable = ring.length - 1;
+		var count = Math.min(n, usable);
+		var step = Math.max(1, Math.floor(usable / count));
+		var out = [];
+		for (var i = 0; i < usable && out.length < count; i += step) {
+			out.push(ring[i]);
+		}
+		return out;
+	}
+
+	function fetchMeanDuration(profile, samples) {
+		if (!samples.length) return Promise.resolve(null);
+		var coords = [state.center].concat(samples).map(function (c) {
+			return round5(c[0]) + "," + round5(c[1]);
+		}).join(";");
+		var url = "https://api.mapbox.com/directions-matrix/v1/mapbox/" + profile +
+			"/" + coords +
+			"?sources=0&annotations=duration&access_token=" + encodeURIComponent(token);
+		return fetch(url)
+			.then(function (r) { return r.ok ? r.json() : null; })
+			.then(function (data) {
+				if (!data || !data.durations || !data.durations[0]) return null;
+				var row = data.durations[0];
+				var sum = 0, n = 0;
+				for (var i = 1; i < row.length; i++) {
+					if (typeof row[i] === "number" && isFinite(row[i])) {
+						sum += row[i];
+						n++;
+					}
+				}
+				return n ? (sum / n) / 60 : null;
+			})
+			.catch(function (err) {
+				console.error("Matrix (" + profile + ") failed:", err);
+				return null;
+			});
+	}
+
+	function formatWalkPenalty(min) {
+		var v = Math.round(min);
+		if (v < 0) return "−" + Math.abs(v) + " min";
+		if (v > 0) return "+" + v + " min";
+		return "~same as cycling";
+	}
+
+	function formatDriveDelta(min) {
+		var v = Math.round(min);
+		if (v < 0) return "−" + Math.abs(v) + " min";
+		if (v > 0) return "+" + v + " min";
+		return "~same as cycling";
+	}
+
+	function setMetricPending() {
+		metricsEl.classList.remove("map-widget__metrics--hidden");
+		walkValueEl.textContent = "…";
+		driveValueEl.textContent = "…";
+		walkValueEl.classList.add("map-widget__metric-value--pending");
+		driveValueEl.classList.add("map-widget__metric-value--pending");
+	}
+
+	function updateTravelMetrics() {
+		var polyFeature = boundaryPolygon();
+		if (!polyFeature) {
+			metricsEl.classList.add("map-widget__metrics--hidden");
+			return;
+		}
+		var key = state.boundaryKey;
+		var reqId = ++matrixRequestSeq;
+		if (matrixCache.has(key)) {
+			renderMetrics(matrixCache.get(key));
+			return;
+		}
+		setMetricPending();
+		var samples = sampleBoundaryPoints(polyFeature, 24);
+		Promise.all([
+			fetchMeanDuration("walking", samples),
+			fetchMeanDuration("driving", samples)
+		]).then(function (results) {
+			if (reqId !== matrixRequestSeq || key !== state.boundaryKey) return;
+			var entry = {
+				walk: results[0],
+				drive: results[1],
+				baseMinutes: state.timeMinutes
+			};
+			matrixCache.set(key, entry);
+			renderMetrics(entry);
+		});
+	}
+
+	function setMetricColor(el, delta) {
+		el.classList.remove("map-widget__metric-value--positive", "map-widget__metric-value--negative");
+		var v = Math.round(delta);
+		if (v > 0) el.classList.add("map-widget__metric-value--positive");
+		else if (v < 0) el.classList.add("map-widget__metric-value--negative");
+	}
+
+	function renderMetrics(entry) {
+		metricsEl.classList.remove("map-widget__metrics--hidden");
+		walkValueEl.classList.remove("map-widget__metric-value--pending");
+		driveValueEl.classList.remove("map-widget__metric-value--pending");
+		if (typeof entry.walk === "number") {
+			var walkDelta = entry.walk - entry.baseMinutes;
+			walkValueEl.textContent = formatWalkPenalty(walkDelta);
+			setMetricColor(walkValueEl, walkDelta);
+		} else {
+			walkValueEl.textContent = "unavailable";
+			walkValueEl.classList.add("map-widget__metric-value--pending");
+			setMetricColor(walkValueEl, 0);
+		}
+		if (typeof entry.drive === "number") {
+			var driveDelta = entry.drive + parkingMinutes - entry.baseMinutes;
+			driveValueEl.textContent = formatDriveDelta(driveDelta);
+			setMetricColor(driveValueEl, driveDelta);
+		} else {
+			driveValueEl.textContent = "unavailable";
+			driveValueEl.classList.add("map-widget__metric-value--pending");
+			setMetricColor(driveValueEl, 0);
+		}
 	}
 
 	function fetchCategory(cat) {
