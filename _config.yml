@@ -32,7 +32,10 @@ plugins:
 host: localhost
 
 # API keys
-mapbox_access_token: "REDACTED_MAPBOX_TOKEN"
+# Empty by default. For local dev, set in `_config.local.yml` (gitignored) and run:
+#   bundle exec jekyll serve --config _config.yml,_config.local.yml
+# For production, the GitHub Actions workflow injects MAPBOX_ACCESS_TOKEN from a repo secret.
+mapbox_access_token: ""
 
 # Exclude from processing.
 # The following items will not be processed, by default. Create a custom list
