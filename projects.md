@@ -4,7 +4,38 @@ title: Projects
 permalink: /projects/
 ---
 
-## [Reaction center Graph Neural Network (RC-GNN)](https://www.biorxiv.org/content/10.1101/2025.06.22.660952v2)
+## [Mechanism-informed enzymatic reaction rules](https://www.biorxiv.org/content/10.64898/2026.05.18.726002v1.full)
+
+![Project visualization](/assets/imgs/projects/mechinformed_key_figure.svg)
+
+<span style="display: inline-block; background-color: #22c55e; color: white; padding: 4px 12px; border-radius: 6px; font-weight: bold; font-size: 14px;">Research</span>
+
+**Overview:**
+In the very first conversation I had with my PhD advisor, Linda, I was captivated by a problem she described: how to best summarize known biochemistry, the collection of chemical reactions known to be catalyzed by enzymes. I'd been reading [David MacKay's book on information theory](https://www.inference.org.uk/mackay/itila/book.html) and I recognized this as a compression problem. The trick would be to abstract only the important features of known reactions in order to predict new ones that could lead to the synthesis of target molecules of interest. My excitement carried me through three years of fits and starts, coming to grips with the complexities and contingencies of biochemistry, learning my own version of [the Bitter Lesson](http://www.incompleteideas.net/IncIdeas/BitterLesson.html), and eventually arriving at a solution which leverages a [wonderful mechanistic dataset](https://www.ebi.ac.uk/thornton-srv/m-csa/) and just a pinch of machine learning. A data-driven approach unlocked a level of performance we would not have otherwise reached, but not until we first stewed in the data, pushing past the loudest features toward the more subtle details that really mattered. For anyone interested, the enzymatic reaction rules which came out of this project are available [here](https://github.com/stefanpate/coarse-grain-rxns).
+
+---
+
+## [Biological computer-aided synthesis planning (BioCASP)](https://github.com/stefanpate/bottle)
+
+<video controls muted loop playsinline width="100%" style="max-width: 800px; display: block; margin: 0 auto;">
+  <source src="/assets/imgs/projects/260525_annotated_pathway_viewer_demo.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
+<span style="display: inline-block; background-color: #a855f7; color: white; padding: 4px 12px; border-radius: 6px; font-weight: bold; font-size: 14px;">Resource</span>
+
+**Overview:**
+This is a CASP data pipeline specific to enzymatically catalyzed reactions. The main processing steps are:
+
+1. **Reaction network expansion:** iterative application of reaction rules in either the forward or retrosynthetic direction
+2. **Pathfinding & analysis:** searches for paths from feedstocks to targets in the reaction network, then retrieves similar known reactions, & calculates Gibbs free energies
+3. **Interative path viewer:** allows users to sort, filter, and evaluate paths, leave feedback and save high-priority paths, as well as access and download enzyme information
+
+I have and continue to use the [pipeline](https://github.com/stefanpate/bottle) and [viewer](https://biocasp.up.railway.app) to predict paths toward monomers of interest in my capacity as a researcher in the Department of Energy's [BOTTLE Consortium](https://www.bottle.org), but these tools may be used for any BioCASP campaign.
+
+---
+
+## [Reaction center Graph Neural Network (RC-GNN)](/assets/other/2026_pate_development_reaction_centered_encoders_jcim.pdf)
 
 ![Project visualization](/assets/imgs/projects/rcgnn_key_figure.svg)
 
