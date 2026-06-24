@@ -22,6 +22,7 @@ domain: stefanpate.github.io
 github_username: stefanpate
 repository: stefanpate/stefanpate.github.io
 linkedin_username: stefan-pate-7b4765129
+scholar_url: https://scholar.google.com/citations?user=SyYXMY4AAAAJ&hl=en
 
 # Build settings
 markdown: kramdown
