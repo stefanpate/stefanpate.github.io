@@ -4,7 +4,7 @@ title: Projects
 permalink: /projects/
 ---
 
-## [Mechanism-informed enzymatic reaction rules](https://www.biorxiv.org/content/10.64898/2026.05.18.726002v1.full)
+## [Mechanism-informed enzymatic reaction rules](/assets/other/2026_pate_mechanism_informed_rules_jcim.pdf)
 
 ![Project visualization](/assets/imgs/projects/mechinformed_key_figure.svg)
 
